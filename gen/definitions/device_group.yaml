@@ -1,0 +1,36 @@
+---
+name: Device Group
+rest_endpoint: /api/fmc_config/v1/domain/{DOMAIN_UUID}/devicegroups/devicegrouprecords
+doc_category: Devices
+res_description: This resource manages a Device Group.
+test_tags: [TF_VAR_device_id]
+attributes:
+  - model_name: name
+    type: String
+    mandatory: true
+    description: Name of the device group.
+    data_source_query: true
+    example: my_device_group
+  - model_name: description
+    type: String
+    description: Description of the device group.
+    example: My device group
+    exclude_test: true
+  - model_name: type
+    type: String
+    description: Type of the resource; this value is always 'DeviceGroup'.
+    computed: true
+  - model_name: members
+    type: Set
+    description: Set of devices that belong to this device group.
+    attributes:
+      - model_name: id
+        tf_name: device_id
+        type: String
+        description: Id of the device.
+        id: true
+        example: 76d24097-41c4-4558-a4d0-a8c07ac08470
+        test_value: var.device_id
+
+test_prerequisites: |-
+  variable "device_id" { default = null } // tests will set $TF_VAR_device_id
