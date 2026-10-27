@@ -160,6 +160,26 @@ func (r *ExternalAuthenticationRadiusResource) Schema(ctx context.Context, req r
 				MarkdownDescription: helpers.NewAttributeDescription("Comma-separated list of usernames that should have CLI access, when using the predefined user list method instead of defining users on the RADIUS server. Leave unset when users and their privileges are managed on the RADIUS server (recommended when privileges are based on Active Directory group membership).").String,
 				Optional:            true,
 			},
+			"custom_attributes": schema.SetNestedAttribute{
+				MarkdownDescription: helpers.NewAttributeDescription("List of Custom RADIUS attribute name-value pairs.").String,
+				Optional:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.Int64Attribute{
+							MarkdownDescription: helpers.NewAttributeDescription("Custom attribute ID.").String,
+							Required:            true,
+						},
+						"name": schema.StringAttribute{
+							MarkdownDescription: helpers.NewAttributeDescription("Custom attribute name.").String,
+							Required:            true,
+						},
+						"type": schema.StringAttribute{
+							MarkdownDescription: helpers.NewAttributeDescription("Custom attribute type.").String,
+							Required:            true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -319,11 +339,6 @@ func (r *ExternalAuthenticationRadiusResource) Update(ctx context.Context, req r
 		reqMods = append(reqMods, fmc.DomainName(plan.Domain.ValueString()))
 	}
 
-	if plan.Id.ValueString() == "" {
-		resp.Diagnostics.AddError("Client Error", "Cannot update object: id is empty, refusing to send request to the collection endpoint")
-		return
-	}
-
 	tflog.Debug(ctx, fmt.Sprintf("%s: Beginning Update", plan.Id.ValueString()))
 
 	body := plan.toBody(ctx, state)
@@ -356,11 +371,6 @@ func (r *ExternalAuthenticationRadiusResource) Delete(ctx context.Context, req r
 	reqMods := [](func(*fmc.Req)){}
 	if !state.Domain.IsNull() && state.Domain.ValueString() != "" {
 		reqMods = append(reqMods, fmc.DomainName(state.Domain.ValueString()))
-	}
-
-	if state.Id.ValueString() == "" {
-		resp.Diagnostics.AddError("Client Error", "Cannot delete object: id is empty, refusing to send request to the collection endpoint")
-		return
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("%s: Beginning Delete", state.Id.ValueString()))

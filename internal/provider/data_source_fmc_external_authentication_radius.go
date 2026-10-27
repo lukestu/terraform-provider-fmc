@@ -126,6 +126,26 @@ func (d *ExternalAuthenticationRadiusDataSource) Schema(ctx context.Context, req
 				MarkdownDescription: "Comma-separated list of usernames that should have CLI access, when using the predefined user list method instead of defining users on the RADIUS server. Leave unset when users and their privileges are managed on the RADIUS server (recommended when privileges are based on Active Directory group membership).",
 				Computed:            true,
 			},
+			"custom_attributes": schema.SetNestedAttribute{
+				MarkdownDescription: "List of Custom RADIUS attribute name-value pairs.",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.Int64Attribute{
+							MarkdownDescription: "Custom attribute ID.",
+							Computed:            true,
+						},
+						"name": schema.StringAttribute{
+							MarkdownDescription: "Custom attribute name.",
+							Computed:            true,
+						},
+						"type": schema.StringAttribute{
+							MarkdownDescription: "Custom attribute type.",
+							Computed:            true,
+						},
+					},
+				},
+			},
 		},
 	}
 }

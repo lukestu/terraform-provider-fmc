@@ -20,8 +20,13 @@ package provider
 // Section below is generated&owned by "gen/generator.go". //template:begin imports
 import (
 	"context"
+	"fmt"
+	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -31,21 +36,28 @@ import (
 // Section below is generated&owned by "gen/generator.go". //template:begin types
 
 type ExternalAuthenticationRadius struct {
-	Id                          types.String `tfsdk:"id"`
-	Domain                      types.String `tfsdk:"domain"`
-	Name                        types.String `tfsdk:"name"`
-	Type                        types.String `tfsdk:"type"`
-	Description                 types.String `tfsdk:"description"`
-	ServerHostname              types.String `tfsdk:"server_hostname"`
-	ServerPort                  types.Int64  `tfsdk:"server_port"`
-	ServerKey                   types.String `tfsdk:"server_key"`
-	BackupServerHostname        types.String `tfsdk:"backup_server_hostname"`
-	BackupServerPort            types.Int64  `tfsdk:"backup_server_port"`
-	BackupServerKey             types.String `tfsdk:"backup_server_key"`
-	Timeout                     types.Int64  `tfsdk:"timeout"`
-	Retries                     types.Int64  `tfsdk:"retries"`
-	MessageAuthenticatorEnabled types.Bool   `tfsdk:"message_authenticator_enabled"`
-	CliAccessUsers              types.String `tfsdk:"cli_access_users"`
+	Id                          types.String                                   `tfsdk:"id"`
+	Domain                      types.String                                   `tfsdk:"domain"`
+	Name                        types.String                                   `tfsdk:"name"`
+	Type                        types.String                                   `tfsdk:"type"`
+	Description                 types.String                                   `tfsdk:"description"`
+	ServerHostname              types.String                                   `tfsdk:"server_hostname"`
+	ServerPort                  types.Int64                                    `tfsdk:"server_port"`
+	ServerKey                   types.String                                   `tfsdk:"server_key"`
+	BackupServerHostname        types.String                                   `tfsdk:"backup_server_hostname"`
+	BackupServerPort            types.Int64                                    `tfsdk:"backup_server_port"`
+	BackupServerKey             types.String                                   `tfsdk:"backup_server_key"`
+	Timeout                     types.Int64                                    `tfsdk:"timeout"`
+	Retries                     types.Int64                                    `tfsdk:"retries"`
+	MessageAuthenticatorEnabled types.Bool                                     `tfsdk:"message_authenticator_enabled"`
+	CliAccessUsers              types.String                                   `tfsdk:"cli_access_users"`
+	CustomAttributes            []ExternalAuthenticationRadiusCustomAttributes `tfsdk:"custom_attributes"`
+}
+
+type ExternalAuthenticationRadiusCustomAttributes struct {
+	Id   types.Int64  `tfsdk:"id"`
+	Name types.String `tfsdk:"name"`
+	Type types.String `tfsdk:"type"`
 }
 
 // End of section. //template:end types
@@ -105,6 +117,30 @@ func (data ExternalAuthenticationRadius) toBody(ctx context.Context, state Exter
 	}
 	if !data.CliAccessUsers.IsNull() {
 		body, _ = sjson.Set(body, "cliAccessUserList", data.CliAccessUsers.ValueString())
+	}
+	if len(data.CustomAttributes) > 0 {
+		var customAttributesBody strings.Builder
+		customAttributesBody.WriteString("[")
+		for _, item := range data.CustomAttributes {
+			itemBody := ""
+			if !item.Id.IsNull() {
+				itemBody, _ = sjson.Set(itemBody, "attributeId", item.Id.ValueInt64())
+			}
+			if !item.Name.IsNull() {
+				itemBody, _ = sjson.Set(itemBody, "attributeName", item.Name.ValueString())
+			}
+			if !item.Type.IsNull() {
+				itemBody, _ = sjson.Set(itemBody, "attributeType", item.Type.ValueString())
+			}
+			if itemBody != "" {
+				if customAttributesBody.Len() > 1 {
+					customAttributesBody.WriteString(",")
+				}
+				customAttributesBody.WriteString(itemBody)
+			}
+		}
+		customAttributesBody.WriteString("]")
+		body, _ = sjson.SetRaw(body, "customAttributes", customAttributesBody.String())
 	}
 	return body
 }
@@ -168,6 +204,30 @@ func (data *ExternalAuthenticationRadius) fromBody(ctx context.Context, res gjso
 		data.CliAccessUsers = types.StringValue(value.String())
 	} else {
 		data.CliAccessUsers = types.StringNull()
+	}
+	if value := res.Get("customAttributes"); value.Exists() {
+		data.CustomAttributes = make([]ExternalAuthenticationRadiusCustomAttributes, 0, int(value.Get("#").Int()))
+		value.ForEach(func(k, res gjson.Result) bool {
+			parent := &data
+			data := ExternalAuthenticationRadiusCustomAttributes{}
+			if value := res.Get("attributeId"); value.Exists() {
+				data.Id = types.Int64Value(value.Int())
+			} else {
+				data.Id = types.Int64Null()
+			}
+			if value := res.Get("attributeName"); value.Exists() {
+				data.Name = types.StringValue(value.String())
+			} else {
+				data.Name = types.StringNull()
+			}
+			if value := res.Get("attributeType"); value.Exists() {
+				data.Type = types.StringValue(value.String())
+			} else {
+				data.Type = types.StringNull()
+			}
+			(*parent).CustomAttributes = append((*parent).CustomAttributes, data)
+			return true
+		})
 	}
 }
 
@@ -234,6 +294,59 @@ func (data *ExternalAuthenticationRadius) fromBodyPartial(ctx context.Context, r
 		data.CliAccessUsers = types.StringValue(value.String())
 	} else {
 		data.CliAccessUsers = types.StringNull()
+	}
+	customAttributesArray := res.Get("customAttributes")
+	for i := 0; i < len(data.CustomAttributes); i++ {
+		keys := [...]string{"attributeId", "attributeName", "attributeType"}
+		keyValues := [...]string{strconv.FormatInt(data.CustomAttributes[i].Id.ValueInt64(), 10), data.CustomAttributes[i].Name.ValueString(), data.CustomAttributes[i].Type.ValueString()}
+
+		parent := &data
+		data := (*parent).CustomAttributes[i]
+		var res gjson.Result
+
+		customAttributesArray.ForEach(
+			func(_, v gjson.Result) bool {
+				found := false
+				for ik := range keys {
+					if v.Get(keys[ik]).String() != keyValues[ik] {
+						found = false
+						break
+					}
+					found = true
+				}
+				if found {
+					res = v
+					return false
+				}
+				return true
+			},
+		)
+		if !res.Exists() {
+			tflog.Debug(ctx, fmt.Sprintf("removing CustomAttributes[%d] = %+v",
+				i,
+				(*parent).CustomAttributes[i],
+			))
+			(*parent).CustomAttributes = slices.Delete((*parent).CustomAttributes, i, i+1)
+			i--
+
+			continue
+		}
+		if value := res.Get("attributeId"); value.Exists() && !data.Id.IsNull() {
+			data.Id = types.Int64Value(value.Int())
+		} else {
+			data.Id = types.Int64Null()
+		}
+		if value := res.Get("attributeName"); value.Exists() && !data.Name.IsNull() {
+			data.Name = types.StringValue(value.String())
+		} else {
+			data.Name = types.StringNull()
+		}
+		if value := res.Get("attributeType"); value.Exists() && !data.Type.IsNull() {
+			data.Type = types.StringValue(value.String())
+		} else {
+			data.Type = types.StringNull()
+		}
+		(*parent).CustomAttributes[i] = data
 	}
 }
 

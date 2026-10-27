@@ -259,11 +259,6 @@ func (r *FTDPlatformSettingsResource) Update(ctx context.Context, req resource.U
 		reqMods = append(reqMods, fmc.DomainName(plan.Domain.ValueString()))
 	}
 
-	if plan.Id.ValueString() == "" {
-		resp.Diagnostics.AddError("Client Error", "Cannot update object: id is empty, refusing to send request to the collection endpoint")
-		return
-	}
-
 	tflog.Debug(ctx, fmt.Sprintf("%s: Beginning Update", plan.Id.ValueString()))
 
 	body := plan.toBody(ctx, state)
@@ -296,11 +291,6 @@ func (r *FTDPlatformSettingsResource) Delete(ctx context.Context, req resource.D
 	reqMods := [](func(*fmc.Req)){}
 	if !state.Domain.IsNull() && state.Domain.ValueString() != "" {
 		reqMods = append(reqMods, fmc.DomainName(state.Domain.ValueString()))
-	}
-
-	if state.Id.ValueString() == "" {
-		resp.Diagnostics.AddError("Client Error", "Cannot delete object: id is empty, refusing to send request to the collection endpoint")
-		return
 	}
 
 	tflog.Debug(ctx, fmt.Sprintf("%s: Beginning Delete", state.Id.ValueString()))
